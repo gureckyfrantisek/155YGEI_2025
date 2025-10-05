@@ -63,9 +63,9 @@ for row = 1:8:m-7
         Crt_dct = dct(Crtile);
 
         % Quantize the transformed rasters
-        Yt_q = round(Yt_dct ./ Qyf);
-        Cbt_q = round(Cbt_dct ./ Qcf);
-        Crt_q = round(Crt_dct ./ Qcf);
+        Yt_q = Yt_dct ./ Qyf;
+        Cbt_q = Cbt_dct ./ Qcf;
+        Crt_q = Crt_dct ./ Qcf;
 
         % Update the matrix
         Y(row : row+7, col : col+7) = Yt_q;
@@ -81,20 +81,20 @@ for row = 1:8:m-7
         Cbtile = Cb(row : row+7, col : col+7);
         Crtile = Cr(row : row+7, col : col+7);
 
-        % Apply the IDCT
-        Yt_idct = invdct(Ytile);
-        Cbt_idct = invdct(Cbtile);
-        Crt_idct = invdct(Crtile);
-
         % De - Quantize the transformed rasters
-        Yt_q = round(Yt_dct .* Qyf);
-        Cbt_q = round(Cbt_dct .* Qcf);
-        Crt_q = round(Crt_dct .* Qcf);
+        Yt_q = Ytile .* Qyf;
+        Cbt_q = Cbtile .* Qcf;
+        Crt_q = Crtile .* Qcf;
+
+        % Apply the IDCT
+        Yt_idct = invdct(Yt_q);
+        Cbt_idct = invdct(Cbt_q);
+        Crt_idct = invdct(Crt_q);
 
         % Update the matrix
-        Y(row : row+7, col : col+7) = Yt_q;
-        Cb(row : row+7, col : col+7) = Cbt_q;
-        Cr(row : row+7, col : col+7) = Crt_q;
+        Y(row : row+7, col : col+7) = Yt_idct;
+        Cb(row : row+7, col : col+7) = Cbt_idct;
+        Cr(row : row+7, col : col+7) = Crt_idct;
     end
 end
 
@@ -102,6 +102,19 @@ end
 Rdec = Y + 1.4020 * (Cr-128);
 Gdec = Y - 0.3441 * (Cb-128) - 0.7141 * (Cr-128);
 Bdec = Y + 1.7720 * (Cb-128) - 0.0001 * (Cr-128);
+
+% Convert back to uint8
+Ri = uint8(Rdec);
+Gi = uint8(Gdec);
+Bi = uint8(Bdec);
+
+% Assemble the image
+imageOut(:, :, 1) = Ri;
+imageOut(:, :, 2) = Gi;
+imageOut(:, :, 3) = Bi;
+
+% Show the image compressed
+imshow(imageOut)
 
 %% Standart deviations for RGB
 
@@ -131,7 +144,7 @@ function [imgt] = dct(img)
             
             for x = 0:7
                 for y = 0:7
-                    fuv = fuv + 0.25 * Cu * Cv * img(x+1, y+1) * cos((2*(x+1) + 1) * (u * pi) / 16) * cos((2*(y+1) + 1) * (v * pi) / 16);
+                    fuv = fuv + 0.25 * Cu * Cv * img(x+1, y+1) * cos((2*x + 1) * u * pi / 16) * cos((2*y + 1) * v * pi / 16);
                 end
             end
 
@@ -152,7 +165,7 @@ function [imgt] = invdct(img)
         for y = 0:7
 
             % Init the sum
-            fuv = 0;
+            fxy = 0;
             for u = 0:7
                 for v = 0:7
                     % Find Cu and Cv
@@ -168,12 +181,12 @@ function [imgt] = invdct(img)
                         Cv = 1;
                     end
 
-                    fuv = fuv + 0.25 * Cu * Cv * img(x+1, y+1) * cos((2*(x+1) + 1) * (u * pi) / 16) * cos((2*(y+1) + 1) * (v * pi) / 16);
+                    fxy = fxy + 0.25 * Cu * Cv * img(u+1, v+1) * cos((2*x + 1) * u * pi / 16) * cos((2*y + 1) * v * pi / 16);
                 end
             end
 
             % Save the value
-            imgt(u+1, v+1) = fuv;
+            imgt(x+1, y+1) = fxy;
         end
     end
 
