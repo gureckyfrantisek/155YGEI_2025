@@ -117,6 +117,20 @@ imageOut(:, :, 3) = Bi;
 imshow(imageOut)
 
 %% Standart deviations for RGB
+% Calculate errors v
+vR = R - Rdec;
+vG = G - Gdec;
+vB = B - Bdec;
+
+% Sums of squared erros
+sumvR = sum(vR.^2);
+sumvG = sum(vG.^2);
+sumvB = sum(vB.^2);
+
+% Standart deviations
+sigR = sqrt(sum(sumvR) / (m*n));
+sigG = sqrt(sum(sumvG) / (m*n));
+sigB = sqrt(sum(sumvB) / (m*n));
 
 %% Custom functions
 function [imgt] = dct(img)
