@@ -88,7 +88,29 @@ for row = 1:8:m-7
     end
 end
 
+%% Zig zag ordering of pixels
+% Works only for square images
+if (m == n)
+    % Prepare the space
+    Yzz = zigzag(Y, m, n);
+    Cbzz = zigzag(Cb, m, n);
+    Crzz = zigzag(Cr, m, n);
+    
+    %% Huffman encoding
+end
+
 %%%% JPEG Decompression
+%% Reverse Zig Zag and Huffman
+if (m == n)
+    %% Huffman decoding
+
+    %% Inverse zig zag
+    % Prepare the space
+    Ydezz = invzigzag(Yzz, m, n);
+    Cbdezz = invzigzag(Cbzz, m, n);
+    Crdezz = invzigzag(Crzz, m, n);
+end
+
 for row = 1:8:m-7
     for col = 1:8:n-7
         Ytile = Y(row : row+7, col : col+7);
@@ -218,4 +240,64 @@ function [imgt] = invdct(img)
         end
     end
 
+end
+
+function [row] = zigzag(matrix, m, n)
+    row = zeros(m*n, 1);
+    added = 0;
+
+    for i = 1:m
+        if (mod(i, 2) == 0)
+            % Zig
+            for j = 0:i-1
+                % Add to the front and back at once, 
+                % if we're on the last i, add just from one side
+                row(added+1) = matrix(1+j, i-j);
+                if (i ~= m)
+                    row(length(row) - added) = matrix(end-j, (m-i+1)+j);
+                end
+
+                added = added + 1;
+            end
+        else
+            % Zag
+            for j = 0:i-1
+                row(added+1) = matrix(i-j, 1+j);
+                if (i ~= m)
+                    row(length(row) - added) = matrix((m-i+1)+j, end-j);
+                end
+
+                added = added + 1;
+            end
+        end
+    end
+end
+
+function [matrix] = invzigzag(row, m, n)
+    matrix = zeros(m, n);
+    added = 0;
+
+    for i = 1:m
+        if (mod(i, 2) == 0)
+            % Zig
+            for j = 0:i-1
+                matrix(1+j, i-j) = row(added+1);
+                if (i ~= m)
+                    matrix(end-j, (m-i+1)+j) = row(m*n - added);
+                end
+
+                added = added + 1;
+            end
+        else
+            % Zag
+            for j = 0:i-1
+                matrix(i-j, 1+j) = row(added+1);
+                if (i ~= m)
+                    matrix((m-i+1)+j, end-j) = row(m*n - added);
+                end
+
+                added = added + 1;
+            end
+        end
+    end
 end
