@@ -51,6 +51,20 @@ Cr_old = Cr;
 % Input size
 [m, n] = size(Y);
 
+% Resampling
+resSize = [2, 2];       % Try for [2, 1], [3, 3], [4, 4]
+for i = 1:resSize(1):m-1
+    for j = 1:resSize(2):n-1
+        Ysub = Y(i:i+resSize(1)-1, j:j+resSize(2)-1);
+        Cbsub = Cb(i:i+resSize(1)-1, j:j+resSize(2)-1);
+        Crsub = Cr(i:i+resSize(1)-1, j:j+resSize(2)-1);
+        
+        Y(i:i+resSize(1)-1, j:j+resSize(2)-1) = mean(Ysub(:));
+        Cb(i:i+resSize(1)-1, j:j+resSize(2)-1) = mean(Cbsub(:));
+        Cr(i:i+resSize(1)-1, j:j+resSize(2)-1) = mean(Crsub(:));
+    end
+end
+
 for row = 1:8:m-7
     for col = 1:8:n-7
         Ytile = Y(row : row+7, col : col+7);
