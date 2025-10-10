@@ -80,11 +80,16 @@ for row = 1:8:m-7
         Yt_q = Yt_dct ./ Qyf;
         Cbt_q = Cbt_dct ./ Qcf;
         Crt_q = Crt_dct ./ Qcf;
+        
+        % Round the values
+        Yt_qr = round(Yt_q);
+        Cbt_qr = round(Cbt_q);
+        Crt_qr = round(Crt_q);
 
         % Update the matrix
-        Y(row : row+7, col : col+7) = Yt_q;
-        Cb(row : row+7, col : col+7) = Cbt_q;
-        Cr(row : row+7, col : col+7) = Crt_q;
+        Y(row : row+7, col : col+7) = Yt_qr;
+        Cb(row : row+7, col : col+7) = Cbt_qr;
+        Cr(row : row+7, col : col+7) = Crt_qr;
     end
 end
 
