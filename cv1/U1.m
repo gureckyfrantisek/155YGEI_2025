@@ -102,6 +102,9 @@ if (m == n)
     Crzz = zigzag(Cr, m, n);
     
     %% Huffman encoding
+    [Ycomp, Ydict] = huffman(Yzz);
+    [Cbcomp, Cbdict] = huffman(Cbzz);
+    [Crcomp, Crdict] = huffman(Crzz);
 end
 
 %%%% JPEG Decompression
@@ -304,5 +307,69 @@ function [matrix] = invzigzag(row, m, n)
                 added = added + 1;
             end
         end
+    end
+end
+
+function generateCodes(node, prefix, dict)
+    % node = {prob, symbol}  OR  {prob, {left, right}}
+    value = node{2};
+
+    % Case 1: leaf node (numeric symbol)
+    if isnumeric(value)
+        dict(value) = prefix;
+        return;
+    end
+
+    % Case 2: internal node, recurse
+    left = value{1};
+    right = value{2};
+
+    % Left gets 1, right gets 0
+    generateCodes(left, [prefix '1'], dict);
+    generateCodes(right, [prefix '0'], dict);
+end
+
+function [compressed, dict] = huffman(data)
+    symbols = unique(data);
+    counts = zeros(length(symbols), 1);
+    for i = 1:length(data)
+        index = find(data(i) == symbols);
+        counts(index) = counts(index) + 1;
+    end
+
+    probs = counts / sum(counts);
+
+    nodes = cell(length(symbols), 1);
+    for i = 1:length(symbols)
+        nodes{i} = {probs(i), symbols(i)};
+    end
+    
+     while length(nodes) > 1
+        % Sort both together
+        [probs, order] = sort(probs);
+        nodes = nodes(order);
+    
+        % Take two smallest nodes
+        left = nodes{1};
+        right = nodes{2};
+    
+        % Create new merged node
+        newNode = {left{1} + right{1}, {left, right}};
+    
+        % Replace first two nodes with the merged one
+        nodes = [nodes(3:end); {newNode}];
+    
+        % Update probability list
+        probs = [probs(3:end); newNode{1}];
+    end
+
+    root = nodes{1};
+    dict = containers.Map('KeyType', 'double', 'ValueType', 'any');
+    generateCodes(root, '', dict);
+
+    % Encode to a string
+    compressed = '';
+    for i = 1:length(data)
+        compressed = [compressed dict(data(i))];
     end
 end
