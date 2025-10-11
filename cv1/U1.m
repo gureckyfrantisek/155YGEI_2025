@@ -105,18 +105,22 @@ if (m == n)
     [Ycomp, Ydict] = huffman(Yzz);
     [Cbcomp, Cbdict] = huffman(Cbzz);
     [Crcomp, Crdict] = huffman(Crzz);
+
 end
 
 %%%% JPEG Decompression
 %% Reverse Zig Zag and Huffman
 if (m == n)
     %% Huffman decoding
+    Ydecomp = invhuffman(Ycomp, Ydict);
+    Cbdecomp = invhuffman(Cbcomp, Cbdict);
+    Crdecomp = invhuffman(Crcomp, Crdict);
 
     %% Inverse zig zag
     % Prepare the space
-    Ydezz = invzigzag(Yzz, m, n);
-    Cbdezz = invzigzag(Cbzz, m, n);
-    Crdezz = invzigzag(Crzz, m, n);
+    Ydezz = invzigzag(Ydecomp, m, n);
+    Cbdezz = invzigzag(Cbdecomp, m, n);
+    Crdezz = invzigzag(Crdecomp, m, n);
 end
 
 for row = 1:8:m-7
@@ -316,7 +320,7 @@ function generateCodes(node, prefix, dict)
 
     % Case 1: leaf node (numeric symbol)
     if isnumeric(value)
-        dict(value) = prefix;
+        dict(prefix) = value;
         return;
     end
 
@@ -364,12 +368,40 @@ function [compressed, dict] = huffman(data)
     end
 
     root = nodes{1};
-    dict = containers.Map('KeyType', 'double', 'ValueType', 'any');
+    dict = containers.Map('KeyType', 'char', 'ValueType', 'double');
     generateCodes(root, '', dict);
+
+    encodeDict = containers.Map('KeyType', 'double', 'ValueType', 'char');
+    codes = keys(dict);
+    for i = 1:length(codes)
+        code = codes{i};
+        symbol = dict(code);
+        encodeDict(symbol) = code;
+    end
 
     % Encode to a string
     compressed = '';
     for i = 1:length(data)
-        compressed = [compressed dict(data(i))];
+        compressed = [compressed encodeDict(data(i))];
+    end
+end
+
+function [data] = invhuffman(compressed, dict)
+    data = [];
+    current = '';
+
+    dictKeys = keys(dict);
+
+    for i = 1:length(compressed)
+        current = [current, compressed(i)];
+
+        for k = 1:length(dictKeys)
+            key = dictKeys{k};
+            if strcmp(current, key)
+                data(end+1) = dict(key);
+                current = '';
+                break; % Found a match, break out of loop
+            end
+        end
     end
 end
