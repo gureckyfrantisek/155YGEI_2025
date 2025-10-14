@@ -1,7 +1,8 @@
 clc; clear; format short g; close;
 
 %% Input data
-image = imread("data/Image2.bmp");
+inputFile = "data/text2.bmp";
+image = imread(inputFile);
 imshow(image)
 
 %% Split the image into separate RGB layers
@@ -37,7 +38,7 @@ Qc = [  17 18 24 47 66 99 99 99
         99 99 99 99 99 99 99 99];
 
 %% Compression factor q
-q = 50;
+q = 70;
 
 Qyf = 50 * Qy / q;
 Qcf = 50 * Qc / q;
@@ -275,6 +276,17 @@ figure;
 % Show the image compressed
 imshow(imageOut)
 
+% Get the file name without extension
+% [~, name, ~] = fileparts(inputFile);
+% 
+% % Create the output PNG file name including the transformation type and compression factor
+% outputFile = sprintf('%s_%s_q%d.png', name, type_of_transformation, q);
+% 
+% % Save as PNG
+% imwrite(imageOut, outputFile);
+% 
+% fprintf('Save as: %s\n', outputFile);
+
 %% Standart deviations for RGB
 % Calculate errors v
 vR = R - Rdec;
@@ -291,6 +303,22 @@ sigR = sqrt(sum(sumvR) / (m*n));
 sigG = sqrt(sum(sumvG) / (m*n));
 sigB = sqrt(sum(sumvB) / (m*n));
 
+% %% Save results to CSV
+% csvFile = 'results.csv';
+% 
+% % If the CSV file does not exist, create the header
+% if ~isfile(csvFile)
+%     header = {'Filename', 'sigR', 'sigG', 'sigB'};
+%     writecell(header, csvFile);
+% end
+% 
+% % Prepare the data to write (string + three numeric values)
+% row = {outputFile, sigR, sigG, sigB};
+% 
+% % Append a new row to the end of the CSV file
+% writecell(row, csvFile, 'WriteMode', 'append');
+% 
+% fprintf('Results written to %s\n', csvFile);
 %% Custom functions
 function [imgt] = dct(img)
     % Result will have the same size
