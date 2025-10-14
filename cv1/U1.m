@@ -1,7 +1,7 @@
 clc; clear; format short g; close;
 
 %% Input data
-image = imread("data/Image1.bmp");
+image = imread("data/Image2.bmp");
 imshow(image)
 
 %% Split the image into separate RGB layers
@@ -65,31 +65,93 @@ for i = 1:resSize(1):m-1
     end
 end
 
-for row = 1:8:m-7
-    for col = 1:8:n-7
-        Ytile = Y(row : row+7, col : col+7);
-        Cbtile = Cb(row : row+7, col : col+7);
-        Crtile = Cr(row : row+7, col : col+7);
+% Type of transformation (dct, dft, dwt)
+type_of_transformation="dwt"
 
-        % Apply the DCT
-        Yt_dct = dct(Ytile);
-        Cbt_dct = dct(Cbtile);
-        Crt_dct = dct(Crtile);
-
-        % Quantize the transformed rasters
-        Yt_q = Yt_dct ./ Qyf;
-        Cbt_q = Cbt_dct ./ Qcf;
-        Crt_q = Crt_dct ./ Qcf;
-        
-        % Round the values
-        Yt_qr = round(Yt_q);
-        Cbt_qr = round(Cbt_q);
-        Crt_qr = round(Crt_q);
-
-        % Update the matrix
-        Y(row : row+7, col : col+7) = Yt_qr;
-        Cb(row : row+7, col : col+7) = Cbt_qr;
-        Cr(row : row+7, col : col+7) = Crt_qr;
+switch type_of_transformation
+    case "dct"
+    for row = 1:8:m-7
+        for col = 1:8:n-7
+            Ytile = Y(row : row+7, col : col+7);
+            Cbtile = Cb(row : row+7, col : col+7);
+            Crtile = Cr(row : row+7, col : col+7);
+    
+            % Apply the DCT
+            Yt_dct = dct(Ytile);
+            Cbt_dct = dct(Cbtile);
+            Crt_dct = dct(Crtile);
+    
+            % Quantize the transformed rasters
+            Yt_q = Yt_dct ./ Qyf;
+            Cbt_q = Cbt_dct ./ Qcf;
+            Crt_q = Crt_dct ./ Qcf;
+    
+            % Round the values
+            Yt_qr = round(Yt_q);
+            Cbt_qr = round(Cbt_q);
+            Crt_qr = round(Crt_q);
+    
+            % Update the matrix
+            Y(row : row+7, col : col+7) = Yt_qr;
+            Cb(row : row+7, col : col+7) = Cbt_qr;
+            Cr(row : row+7, col : col+7) = Crt_qr;
+        end
+    end
+    case "dft"
+    for row = 1:8:m-7
+        for col = 1:8:n-7
+            Ytile = Y(row : row+7, col : col+7);
+            Cbtile = Cb(row : row+7, col : col+7);
+            Crtile = Cr(row : row+7, col : col+7);
+    
+            % Apply the DFT
+            Yt_dft = real(dft(Ytile));
+            Cbt_dft = real(dft(Cbtile));
+            Crt_dft = real(dft(Crtile));
+    
+            % Quantize the transformed rasters
+            Yt_q = Yt_dft ./ Qyf;
+            Cbt_q = Cbt_dft ./ Qcf;
+            Crt_q = Crt_dft ./ Qcf;
+            
+            % Round the values
+            Yt_qr = round(Yt_q);
+            Cbt_qr = round(Cbt_q);
+            Crt_qr = round(Crt_q);
+    
+            % Update the matrix
+            Y(row : row+7, col : col+7) = Yt_qr;
+            Cb(row : row+7, col : col+7) = Cbt_qr;
+            Cr(row : row+7, col : col+7) = Crt_qr;
+        end
+    end
+    case "dwt"
+    for row = 1:8:m-7
+        for col = 1:8:n-7
+            Ytile = Y(row : row+7, col : col+7);
+            Cbtile = Cb(row : row+7, col : col+7);
+            Crtile = Cr(row : row+7, col : col+7);
+    
+            % Apply the DFT
+            Yt_dwt = dwt2(Ytile);
+            Cbt_dwt = dwt2(Cbtile);
+            Crt_dwt = dwt2(Crtile);
+    
+            % Quantize the transformed rasters
+            Yt_q = Yt_dwt ./ Qyf;
+            Cbt_q = Cbt_dwt ./ Qcf;
+            Crt_q = Crt_dwt ./ Qcf;
+            
+            % Round the values
+            Yt_qr = round(Yt_q);
+            Cbt_qr = round(Cbt_q);
+            Crt_qr = round(Crt_q);
+    
+            % Update the matrix
+            Y(row : row+7, col : col+7) = Yt_qr;
+            Cb(row : row+7, col : col+7) = Cbt_qr;
+            Cr(row : row+7, col : col+7) = Crt_qr;
+        end
     end
 end
 
@@ -122,27 +184,75 @@ if (m == n)
     Cbdezz = invzigzag(Cbdecomp, m, n);
     Crdezz = invzigzag(Crdecomp, m, n);
 end
-
-for row = 1:8:m-7
-    for col = 1:8:n-7
-        Ytile = Y(row : row+7, col : col+7);
-        Cbtile = Cb(row : row+7, col : col+7);
-        Crtile = Cr(row : row+7, col : col+7);
-
-        % De - Quantize the transformed rasters
-        Yt_q = Ytile .* Qyf;
-        Cbt_q = Cbtile .* Qcf;
-        Crt_q = Crtile .* Qcf;
-
-        % Apply the IDCT
-        Yt_idct = invdct(Yt_q);
-        Cbt_idct = invdct(Cbt_q);
-        Crt_idct = invdct(Crt_q);
-
-        % Update the matrix
-        Y(row : row+7, col : col+7) = Yt_idct;
-        Cb(row : row+7, col : col+7) = Cbt_idct;
-        Cr(row : row+7, col : col+7) = Crt_idct;
+switch type_of_transformation
+    case "dct"
+    for row = 1:8:m-7
+        for col = 1:8:n-7
+            Ytile = Y(row : row+7, col : col+7);
+            Cbtile = Cb(row : row+7, col : col+7);
+            Crtile = Cr(row : row+7, col : col+7);
+    
+            % De - Quantize the transformed rasters
+            Yt_q = Ytile .* Qyf;
+            Cbt_q = Cbtile .* Qcf;
+            Crt_q = Crtile .* Qcf;
+    
+            % Apply the IDCT
+            Yt_idct = invdct(Yt_q);
+            Cbt_idct = invdct(Cbt_q);
+            Crt_idct = invdct(Crt_q);
+    
+            % Update the matrix
+            Y(row : row+7, col : col+7) = Yt_idct;
+            Cb(row : row+7, col : col+7) = Cbt_idct;
+            Cr(row : row+7, col : col+7) = Crt_idct;
+        end
+    end
+    case "dft"
+    for row = 1:8:m-7
+        for col = 1:8:n-7
+            Ytile = Y(row : row+7, col : col+7);
+            Cbtile = Cb(row : row+7, col : col+7);
+            Crtile = Cr(row : row+7, col : col+7);
+    
+            % De - Quantize the transformed rasters
+            Yt_q = Ytile .* Qyf;
+            Cbt_q = Cbtile .* Qcf;
+            Crt_q = Crtile .* Qcf;
+    
+            % Apply the IDFT
+            Yt_idft = real(invdft(Yt_q));
+            Cbt_idft = real(invdft(Cbt_q));
+            Crt_idft = real(invdft(Crt_q));
+    
+            % Update the matrix
+            Y(row : row+7, col : col+7) = Yt_idft;
+            Cb(row : row+7, col : col+7) = Cbt_idft;
+            Cr(row : row+7, col : col+7) = Crt_idft;
+        end
+    end
+    case "dwt"
+    for row = 1:8:m-7
+        for col = 1:8:n-7
+            Ytile = Y(row : row+7, col : col+7);
+            Cbtile = Cb(row : row+7, col : col+7);
+            Crtile = Cr(row : row+7, col : col+7);
+    
+            % De - Quantize the transformed rasters
+            Yt_q = Ytile .* Qyf;
+            Cbt_q = Cbtile .* Qcf;
+            Crt_q = Crtile .* Qcf;
+    
+            % Apply the IDFT
+            Yt_idwt = idwt2(Yt_q);
+            Cbt_idwt = idwt2(Cbt_q);
+            Crt_idwt = idwt2(Crt_q);
+    
+            % Update the matrix
+            Y(row : row+7, col : col+7) = Yt_idwt;
+            Cb(row : row+7, col : col+7) = Cbt_idwt;
+            Cr(row : row+7, col : col+7) = Crt_idwt;
+        end
     end
 end
 
@@ -161,6 +271,7 @@ imageOut(:, :, 1) = Ri;
 imageOut(:, :, 2) = Gi;
 imageOut(:, :, 3) = Bi;
 
+figure;
 % Show the image compressed
 imshow(imageOut)
 
@@ -285,6 +396,40 @@ function [row] = zigzag(matrix, m, n)
     end
 end
 
+% Discrete Fourier Transform
+function [imgt]=dft(img)
+    [M,N]=size(img);
+    imgt=zeros(M,N);
+    for u =0:M-1
+        for v=0:N-1
+            sum=0;
+            for x =0:M-1
+                for y=0:N-1
+                    sum=sum+img(x+1,y+1)*exp(-2*pi*1i*(u*x/M + v*y/N));
+                end
+            end
+            imgt(u+1,v+1)=sum;
+        end
+    end
+end
+
+% Inverse discrete Fourier Transform
+function [imgt]=invdft(img)
+    [M,N]=size(img);
+    imgt=zeros(M,N);
+    for x =0:M-1
+        for y=0:N-1
+            sum=0;
+            for u =0:M-1
+                for v=0:N-1
+                    sum=sum+img(u+1,v+1)*exp(2*pi*1i*(u*x/M + v*y/N));
+                end
+            end
+            imgt(x+1,y+1)=sum/(M*N);
+        end
+    end
+end
+
 function [matrix] = invzigzag(row, m, n)
     matrix = zeros(m, n);
     added = 0;
@@ -404,4 +549,43 @@ function [data] = invhuffman(compressed, dict)
             end
         end
     end
+end
+
+function imgt = dwt2(img)
+    % Horizontal transformation
+    L = (img(:,1:2:end) + img(:,2:2:end)) / 2;
+    H = (img(:,1:2:end) - img(:,2:2:end)) / 2;
+
+    % Vertical transformation
+    LL = (L(1:2:end,:) + L(2:2:end,:)) / 2;
+    LH = (L(1:2:end,:) - L(2:2:end,:)) / 2;
+    HL = (H(1:2:end,:) + H(2:2:end,:)) / 2;
+    HH = (H(1:2:end,:) - H(2:2:end,:)) / 2;
+
+    % Output
+    imgt = [LL, LH; HL, HH];
+end
+
+function img = idwt2(coef)
+    [M, N] = size(coef);
+    
+    % Split into sub-blocks
+    half_rows = M/2; half_cols = N/2;
+    LL = coef(1:half_rows, 1:half_cols);
+    LH = coef(1:half_rows, half_cols+1:end);
+    HL = coef(half_rows+1:end, 1:half_cols);
+    HH = coef(half_rows+1:end, half_cols+1:end);
+    
+    % Reconstruct verticaly
+    L = zeros(M, half_cols);
+    H = zeros(M, half_cols);
+    L(1:2:end,:) = LL + LH;
+    L(2:2:end,:) = LL - LH;
+    H(1:2:end,:) = HL + HH;
+    H(2:2:end,:) = HL - HH;
+    
+    % Reconstruct horizontaly
+    img = zeros(M, N);
+    img(:,1:2:end) = L + H;
+    img(:,2:2:end) = L - H;
 end
