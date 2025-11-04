@@ -10,9 +10,9 @@ clc; clear;
 
 %% copilot !!!!!!!!!NEVERIT!!!!!!!! 
 % Načtěte Müllerovu mapu a vyberte okno pro vyhledávání
-mapImage = imread('muller_map.png');
+mapImage = imread('data\MMC_sk3.jpg');
 searchWindow = imcrop(mapImage); % Uživatel vybere okno
-correlationThreshold = 0.8; % Nastavte prahovou hodnotu korelace
+correlationThreshold = 0.6; % Nastavte prahovou hodnotu korelace
 % Proveďte obrazovou korelaci a najděte pozice obcí s kostelem
 correlationMap = normxcorr2(searchWindow(:,:,1), mapImage(:,:,1)); % Pouze pro jeden kanál
 [maxCorr, maxIdx] = max(correlationMap(:)); % Najděte maximální korelaci
