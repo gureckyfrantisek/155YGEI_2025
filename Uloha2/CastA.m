@@ -5,40 +5,68 @@
 
 % zredukovat pocet najitych koralaci na jendom misto pouze na jedno
 
-
 clc; clear;
 
-%% copilot !!!!!!!!!NEVERIT!!!!!!!! 
-% Načtěte Müllerovu mapu a vyberte okno pro vyhledávání
 mapImage = imread('data\MMC_sk3.jpg');
-searchWindow = imcrop(mapImage); % Uživatel vybere okno
-correlationThreshold = 0.6; % Nastavte prahovou hodnotu korelace
-% Proveďte obrazovou korelaci a najděte pozice obcí s kostelem
-correlationMap = normxcorr2(searchWindow(:,:,1), mapImage(:,:,1)); % Pouze pro jeden kanál
-[maxCorr, maxIdx] = max(correlationMap(:)); % Najděte maximální korelaci
-if maxCorr > correlationThreshold
-    [yPeak, xPeak] = ind2sub(size(correlationMap), maxIdx); % Získejte souřadnice
-    churchCoordinates = [xPeak - size(searchWindow, 2) + 1, yPeak - size(searchWindow, 1) + 1]; % Uložení souřadnic
+mapImage=rgb2gray(mapImage);
+vzor_x=3125;
+vzor_y=3365;
+searchWindow = imcrop(mapImage,[vzor_x,vzor_y,35,92]);
+
+correlationThreshold = 0.50; 
+
+% patterns = zeros(35, 92, 5); 
+
+coordinates = [
+    3125, 3365;
+    795, 1623;
+    3620,3220;
+    6418,3224;
+    2773,5030
+];
+
+for i = 1:size(coordinates,1)
+    vzor_x = coordinates(i, 1);
+    vzor_y = coordinates(i, 2);
+    patterns(:, :,i) = imcrop(mapImage, [vzor_x, vzor_y, 35, 92]);
 end
-% Uložení souřadnic kostelů do pole, pokud je nalezeno více než jedno místo
-if maxCorr > correlationThreshold
-    churchCoordinatesList = [churchCoordinates]; % Inicializace seznamu souřadnic
-    % Procházejte zbytek correlationMap a hledejte další shody
-    for i = 1:numel(correlationMap)
-        if correlationMap(i) > correlationThreshold
-            [y, x] = ind2sub(size(correlationMap), i);
-            newCoordinates = [x - size(searchWindow, 2) + 1, y - size(searchWindow, 1) + 1];
-            churchCoordinatesList = [churchCoordinatesList; newCoordinates]; % Přidání nových souřadnic
-        end
-    end
-end
-% Odstranit duplicity ze seznamu souřadnic kostelů
+
+averagePattern = mean(patterns, 3);
+searchWindow = uint8(averagePattern);
+imshow(searchWindow)
+
+correlationMap = normxcorr2(searchWindow(:,:,1), mapImage(:,:,1));
+
+binMap = correlationMap >= correlationThreshold;
+localMax = imregionalmax(correlationMap) & binMap;
+
+[yPeak, xPeak] = find(localMax);
+
+sh = size(searchWindow, 1);
+sw = size(searchWindow, 2);
+churchCoordinatesList = [xPeak - sw + 1, yPeak - sh + 1,];
+
 churchCoordinatesList = unique(churchCoordinatesList, 'rows');
-% Uložení souřadnic kostelů do souboru, pokud byly nalezeny
 if ~isempty(churchCoordinatesList)
     writematrix(churchCoordinatesList, 'church_coordinates.csv');
 end
 
-% Uložení souřadnic kostelů do proměnné pro další zpracování
 numChurches = size(churchCoordinatesList, 1);
 disp(['Nalezeno kostelů: ', num2str(numChurches)]);
+
+figure;
+imshow(mapImage);
+hold on;
+for i = 1:size(churchCoordinatesList, 1)
+    x = churchCoordinatesList(i, 1);
+    y = churchCoordinatesList(i, 2);
+    rectangle('Position', [x, y, size(searchWindow, 2), size(searchWindow, 1)], ...
+        'EdgeColor', 'r', 'LineWidth', 1.5);
+end
+for j=1:size(coordinates,1)
+    rectangle('Position', [coordinates(j,1), coordinates(j,2), size(searchWindow, 2), size(searchWindow, 1)], ...
+            'EdgeColor', 'b', 'LineWidth', 1.5);
+end
+
+hold off;
+title(['Nalezeno kostelů: ', num2str(numChurches)]);
