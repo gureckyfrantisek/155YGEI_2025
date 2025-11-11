@@ -13,9 +13,7 @@ mapImage=rgb2gray(mapImage);
 % vzor_y=3365;
 % searchWindow = imcrop(mapImage,[vzor_x,vzor_y,35,92]);
 
-correlationThreshold = 0.50; 
-
-patterns = zeros(35, 92, 5); 
+correlationThreshold = 0.60; 
 
 coordinates = [
     3125, 3365;
