@@ -1,113 +1,81 @@
-%% segmentace_lesa_TM25.m
-% Robustní extrakce plochy lesa z naskenované mapy TM25_sk3.jpg
-% Výstup: forest_pixels - Nx2 pole [row, col]
+%% --------------------------------------------------------------------
+% Rychlá segmentace lesa z topografické mapy pomocí k-means
+% Doba výpočtu: 5–20 sekund
+%% --------------------------------------------------------------------
 
-clear; close all; clc;
-
-% ------- 1) Načtení obrazu -------
 I = imread('data/TM25_sk3.jpg');
 I = im2double(I);
 [H, W, ~] = size(I);
 
-% Zálohovaný zobrazení
-figure('Name','Originál'); imshow(I); title('Originál TM25');
+%% 1) Převod na L*a*b* (lepší pro k-means)
+lab = rgb2lab(I);
+L = lab(:,:,1);
+A = lab(:,:,2);
+B = lab(:,:,3);
 
-% ------- 2) Převod do HSV a základní prahy pro "zelené" -------
-hsvI = rgb2hsv(I);
-HUE = hsvI(:,:,1);   % 0..1
-SAT = hsvI(:,:,2);
-VAL = hsvI(:,:,3);
+%% 2) Příprava dat pro kmeans – pouze subsampling
+N = H * W;
 
-% Prahové hodnoty naladěné na tvůj sken (tuning z histogramu)
-hue_min = 0.16;  hue_max = 0.50;   % zelené odstíny
-sat_min = 0.06;                  % zelené v mapě mohou mít nižší sytost
-val_min = 0.35;                  % příliš tmavé pixely vyloučit
+sample_size = 150000;        % 150k pixelů – rychlé a stabilní
+idx = randperm(N, sample_size);
 
-mask_green = (HUE >= hue_min) & (HUE <= hue_max) & (SAT >= sat_min) & (VAL >= val_min);
+features = [L(:), A(:), B(:)];
+features_sample = features(idx, :);
 
-% malé úpravy - odrušení šumu
-mask_green = medfilt2(mask_green, [3 3]);
+%% 3) K-means clustering (3 clustery)
+k = 3;
+opts = statset('MaxIter', 150, 'Display', 'final');
 
-figure('Name','Hrubá zelená maska'); imshow(mask_green); title('Hrubá zelená maska');
+[idx_sample, C] = kmeans(features_sample, k, ...
+    'Distance', 'sqeuclidean', ...
+    'Replicates', 3, ...
+    'Options', opts);
 
-% ------- 3) Detekce tenkých lineárních struktur (vrstevnice, kresba) -------
-% Problém: vrstevnice/čáry jsou tenké a bělavě/béžově/brown; detekujeme tenké linky z grayscale
-gray = rgb2gray(I);
+%% 4) Přiřazení clusterů pro celý obrázek
+dist = pdist2(features, C);
+[~, idx_full] = min(dist, [], 2);
+clusters = reshape(idx_full, H, W);
 
-% Zvýraznění lineárních světlých/kontrastních struktur pomocí top-hat s lineárním SE
-line_len = 15;    % délka strukturujícího elementu (naladitelné)
-angles = 0:15:165;
-tophat_sum = zeros(H,W);
-
-for ang = angles
-    se = strel('line', line_len, ang);
-    th = imtophat(gray, se);    % top-hat zvýrazní světlé lineární prvky dané orientace
-    tophat_sum = tophat_sum + th;
+%% 5) Identifikace clusteru lesa
+% Les = nejzelenější cluster → nejnižší A a nejvyšší B
+cluster_stats = zeros(k,2);
+for i = 1:k
+    mask = (clusters == i);
+    cluster_stats(i,1) = mean(A(mask));  % průměr A
+    cluster_stats(i,2) = mean(B(mask));  % průměr B
 end
-% Normalize a prahování top-hat mapy
-tophat_sum = mat2gray(tophat_sum);
-line_mask = tophat_sum > 0.12;   % práh naladit (0.08..0.18)
-line_mask = bwareaopen(line_mask, 20); % odstranit velmi malé artefakty
 
-figure('Name','Detekované linky (top-hat)'); imshow(line_mask); title('Detekované linky (vrstevnice / kresba)');
+% les = nejmenší A (více do zelena)
+[~, forest_cluster] = min(cluster_stats(:,1));
 
-% ------- 4) Odečtení detekovaných čar z hrubé zelené masky -------
-mask_no_lines = mask_green & ~line_mask;
+%% 6) Získání lesní masky
+mask_forest = (clusters == forest_cluster);
 
-% ------- 5) Odstranění popisků / sítí / malých objektů, zachování větších ploch -------
-% Nejprve odstraníme drobné ostrůvky, které nejsou částí lesa
-min_area = 200;    % menší objekty odstraníme (naladitelné)
-mask_clean = bwareaopen(mask_no_lines, min_area);
+%% 7) Odstranění vrstevnic a černých cest
+HSV = rgb2hsv(I);
+V = HSV(:,:,3);
+mask_forest(V < 0.25) = 0;  % černé linie ven
 
-% Doplníme díry uvnitř větších oblastí
-mask_filled = imfill(mask_clean, 'holes');
+%% 8) Morfologické dočištění
+mask_forest = imopen(mask_forest, strel('disk', 3));
+mask_forest = imclose(mask_forest, strel('disk', 5));
 
-% Znovu obnovíme jen díry které chceme zachovat (>50 px)
-holes = mask_filled & ~mask_clean;
-holes_big = bwareaopen(holes, 50);
-forest_mask = (mask_filled & ~holes) | holes_big;
+%% 9) Otvory větší než 50 px zachovat
+mask_forest = imfill(mask_forest, 'holes');
+holes = ~mask_forest;
+Lholes = bwlabel(holes);
+props = regionprops(Lholes, 'Area');
 
-% ------- 6) Doplňkové čištění: odstraň tenké mosty/přeseky způsobené mapovou kresbou -------
-% Odebereme objekty s velkým poměrem perimeter/area (velmi "proužkovité")
-cc = bwconncomp(forest_mask);
-props = regionprops(cc,'Area','Perimeter');
-keepIdx = false(size(props));
-for k = 1:length(props)
-    A = props(k).Area;
-    P = props(k).Perimeter;
-    if A == 0
-        keepIdx(k) = false;
-    else
-        compactness = (P^2)/(4*pi*A); % =1 pro kruh; vyšší = více pruhů/tenké
-        % Podmínka: udržovat objekty se slušnou plochou nebo ne příliš nepravidelné
-        keepIdx(k) = (A >= 250) | (compactness < 15);
+for i = 1:length(props)
+    if props(i).Area < 50
+        mask_forest(Lholes == i) = 1;
     end
 end
-% rekonstrukce masky s vybranými komponentami
-labels = labelmatrix(cc);
-forest_mask2 = ismember(labels, find(keepIdx));
 
-% ------- 7) Finální morfologické doladění -------
-% lehké zaoblení hranic a odstranění malých „ostříže"
-forest_mask2 = imopen(forest_mask2, strel('disk',2));
-forest_mask2 = imclose(forest_mask2, strel('disk',3));
-forest_mask2 = bwareaopen(forest_mask2, 150);
+%% 10) Výsledek
+figure; imshow(mask_forest); title('K-means maska lesa');
 
-% ------- 8) Výsledek a souřadnice pixelů -------
-[row, col] = find(forest_mask2);
-forest_pixels = [row, col];    % Nx2
-
-fprintf('Počet pixelů lesa: %d\n', size(forest_pixels,1));
-% uložit do souboru .mat
-save('forest_pixels_TM25.mat','forest_pixels');
-
-% ------- 9) Vizualizace překrytu na originálu -------
-figure('Name','Výsledek překrytu');
-imshow(I); hold on;
-h = imshow(cat(3, ones(size(forest_mask2)), zeros(size(forest_mask2)), zeros(size(forest_mask2))));
-set(h,'AlphaData',0.35*forest_mask2); % červený průhledný překryv
-title('Extrahovaný les (červeně) překrytý na originálu');
-
-figure('Name','Maska lesa'); imshow(forest_mask2); title('Finální maska lesa');
-
-% KONEC
+%% 11) Export pixelů
+[y, x] = find(mask_forest==1);
+forest_pixels = [x,y];
+save('forest_pixels.mat','forest_pixels');
