@@ -1,2 +1,4 @@
 *.asv
 *.mat
+
+/Uloha3/__pycache__
