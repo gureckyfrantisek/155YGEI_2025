@@ -1,6 +1,7 @@
 from lines_to_graph2 import *
 from pathlib import Path
 from r2g_ver_1_2 import get_graphs, ADRESAR
+import matplotlib.pyplot as plt
 
 def dijkstra(G, start):
     '''
@@ -46,6 +47,39 @@ def rectPath(pred, u, v):
     path.append(v)
     return path
 
+def show_paths(graph, paths):
+    # Prepare the dictionary
+    coords = {}
+
+    # Open and load the nodes.txt file with coordinates
+    with open('data_grafy/nodes.txt') as f:
+        for line in f:
+            # Split with whitespace
+            id, x, y = line.split()
+
+            # Create the point in dictionary
+            coords[int(id)] = [float(x), float(y)]
+    
+    # Show the graph as it is, plot every edge
+    for node in graph:
+        for neighbour in graph[node]:
+            plt.plot([coords[node][0], coords[neighbour][0]], [coords[node][1], coords[neighbour][1]], color="blue", linewidth=1)
+
+    # Highlight the paths for different costs
+    for i, path in enumerate(paths):
+        path_coords = [[], []]
+        for node in path:
+            path_coords[0].append(coords[node][0])
+            path_coords[1].append(coords[node][1])
+
+        plt.plot(path_coords[0], path_coords[1], linewidth=3, label=i)
+
+    # Finally show the plot
+    plt.axis('equal')
+    plt.legend()
+    plt.show()
+            
+
 def main():
     # Get graphs from OSM
     get_graphs()
@@ -69,6 +103,8 @@ def main():
         paths[i] = rectPath(predecessors[i], 1, 57851)
     
         print(paths[i])
+    
+    show_paths(graphs[0], paths)
 
 if __name__ == "__main__":
     main()
