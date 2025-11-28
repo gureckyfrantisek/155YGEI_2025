@@ -1,6 +1,5 @@
 import os
 import osmnx as ox
-import networkx as nx
 import math
 import re  # Přidáno pro lepší hledání čísel v textu
 
@@ -15,18 +14,20 @@ FILE_TIME1 = os.path.join(ADRESAR, 'graph_time_basic.txt')
 FILE_TIME2 = os.path.join(ADRESAR, 'graph_time_tortuous.txt')
 FILE_TORT = os.path.join(ADRESAR, 'graph_tortuosity.txt')
 
-ALL_FILES = [FILE_NODES, FILE_DIST, FILE_TIME1, FILE_TIME2, FILE_TORT]
+def get_graphs():
+    ALL_FILES = [FILE_NODES, FILE_DIST, FILE_TIME1, FILE_TIME2, FILE_TORT]
 
-if not os.path.exists(ADRESAR):
-    os.makedirs(ADRESAR)
+    if not os.path.exists(ADRESAR):
+        print(f"Vytvářím složku {ADRESAR}")
+        os.makedirs(ADRESAR)
 
-# --- KONTROLA EXISTENCE SOUBORŮ ---
-files_exist = all(os.path.exists(f) for f in ALL_FILES)
+    # --- KONTROLA EXISTENCE SOUBORŮ ---
+    files_exist = all(os.path.exists(f) for f in ALL_FILES)
 
-if files_exist:
-    print(f"Soubory již existují ve složce '{ADRESAR}'.")
+    if files_exist:
+        print(f"Soubory již existují ve složce '{ADRESAR}'.")
+        return
 
-else:
     print("Soubory nenalezeny. Probíhá stahování a výpočet.")
 
     ox.settings.timeout = 2000
@@ -54,6 +55,11 @@ else:
         'walk': 5,
         'living_street': 20
     }
+
+    # Pomocný slovník pro seřazení uzlů od 0 do n a ne OSM id
+    # Formát OSM_id: new_id
+    ordered_nodes = {}
+    nodes_counter = 0
 
     for u, v, data in G.edges(data=True):
         # Vzdálenost
@@ -108,25 +114,37 @@ else:
 
         # Ukládání (Obousměrně)
         # Formát: u;v;váha
+
+        # Kontrola, jestli už byl uzel použit, pokud ano, použij 
+        if u not in ordered_nodes:
+            ordered_nodes[u] = nodes_counter
+            nodes_counter += 1
         
+        if v not in ordered_nodes:
+            ordered_nodes[v] = nodes_counter
+            nodes_counter += 1
+        
+        u = ordered_nodes[u]
+        v = ordered_nodes[v]
+
         # Tam
-        edges_dist.append(f"{u};{v};{length_m:.2f}")
-        edges_time1.append(f"{u};{v};{time_basic:.2f}")
-        edges_time2.append(f"{u};{v};{time_tortuous:.2f}")
-        edges_tort.append(f"{u};{v};{tortuosity:.4f}")
+        edges_dist.append(f"{u} {v} {length_m:.2f}\n")
+        edges_time1.append(f"{u} {v} {time_basic:.2f}\n")
+        edges_time2.append(f"{u} {v} {time_tortuous:.2f}\n")
+        edges_tort.append(f"{u} {v} {tortuosity:.4f}\n")
         
         # Zpět
-        edges_dist.append(f"{v};{u};{length_m:.2f}")
-        edges_time1.append(f"{v};{u};{time_basic:.2f}")
-        edges_time2.append(f"{v};{u};{time_tortuous:.2f}")
-        edges_tort.append(f"{v};{u};{tortuosity:.4f}")
+        edges_dist.append(f"{v} {u} {length_m:.2f}\n")
+        edges_time1.append(f"{v} {u} {time_basic:.2f}\n")
+        edges_time2.append(f"{v} {u} {time_tortuous:.2f}\n")
+        edges_tort.append(f"{v} {u} {tortuosity:.4f}\n")
 
     # Ukládání do souborů
     print("4. Ukládám soubory na disk...")
 
     with open(FILE_NODES, 'w') as f:
         for node, data in G.nodes(data=True):
-            f.write(f"{node};{data['x']:.2f};{data['y']:.2f}\n")
+            f.write(f"{ordered_nodes[node]} {data['x']:.2f} {data['y']:.2f}\n")
 
     def save_edges(filename, lines):
         with open(filename, 'w') as f:

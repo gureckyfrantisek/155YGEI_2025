@@ -2,3 +2,5 @@
 *.mat
 
 /Uloha3/__pycache__
+Uloha3/cache
+/Uloha3/data_grafy

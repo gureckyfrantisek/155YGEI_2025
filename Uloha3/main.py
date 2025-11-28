@@ -1,5 +1,6 @@
 from lines_to_graph2 import *
 from pathlib import Path
+from r2g_ver_1_2 import get_graphs, ADRESAR
 
 def dijkstra(G, start):
     '''
@@ -46,12 +47,17 @@ def rectPath(pred, u, v):
     return path
 
 def main():
-    # First translate all line data to graphs
-    data_dir = Path(__file__).parent / "data"
+    # Get graphs from OSM
+    get_graphs()
+
+    # Translate all edge data to graphs
+    data_dir = Path(__file__).parent / ADRESAR
     graphs = []
 
     for file in data_dir.iterdir():
-        graphs.append(convertToGraph(file))
+        if file.name == "nodes.txt":
+            continue
+        graphs.append(convertToGraphWithIDs(file))
     
     # Run Dijsktra on all costs
     predecessors = [[]] * len(graphs)
@@ -60,11 +66,9 @@ def main():
     for i in range(len(graphs)):
         predecessors[i] = dijkstra(graphs[i], 1)
         
-        paths[i] = rectPath(predecessors[i], 1, 2)
+        paths[i] = rectPath(predecessors[i], 1, 57851)
     
         print(paths[i])
-    
-    print(paths)
 
 if __name__ == "__main__":
     main()

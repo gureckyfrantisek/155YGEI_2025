@@ -49,3 +49,37 @@ def convertToGraph(file):
     G = edgesToGraph(D, PS, PE, W)
 
     return G
+
+def loadEdgesWithIDs(file_name):
+    S = []
+    E = []
+    W = []
+
+    with open(file_name) as f:
+        for line in f:
+            # Očekává se: start_id end_id weight
+            sid, eid, w = line.split()
+            S.append(int(sid))
+            E.append(int(eid))
+            W.append(float(w))
+
+    return S, E, W
+
+def edgesToGraphFromIDs(S, E, W):
+    G = defaultdict(dict)
+
+    for i in range(len(S)):
+        u = S[i]
+        v = E[i]
+        w = W[i]
+
+        # Neorientovaný grafs
+        G[u][v] = w
+        G[v][u] = w
+
+    return G
+
+def convertToGraphWithIDs(file):
+    S, E, W = loadEdgesWithIDs(file)
+    G = edgesToGraphFromIDs(S, E, W)
+    return G
