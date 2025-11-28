@@ -4,7 +4,7 @@ import math
 import re  # Přidáno pro lepší hledání čísel v textu
 
 # --- KONFIGURACE ---
-MISTO = 'Středočeský kraj, Czechia' 
+MISTO = 'Moravskoslezský kraj, Czechia' 
 ADRESAR = 'data_grafy' 
 
 # Názvy souborů
@@ -128,16 +128,16 @@ def get_graphs():
         v = ordered_nodes[v]
 
         # Tam
-        edges_dist.append(f"{u} {v} {length_m:.2f}\n")
-        edges_time1.append(f"{u} {v} {time_basic:.2f}\n")
-        edges_time2.append(f"{u} {v} {time_tortuous:.2f}\n")
-        edges_tort.append(f"{u} {v} {tortuosity:.4f}\n")
+        edges_dist.append(f"{u} {v} {length_m:.2f}")
+        edges_time1.append(f"{u} {v} {time_basic:.2f}")
+        edges_time2.append(f"{u} {v} {time_tortuous:.2f}")
+        edges_tort.append(f"{u} {v} {tortuosity:.4f}")
         
         # Zpět
-        edges_dist.append(f"{v} {u} {length_m:.2f}\n")
-        edges_time1.append(f"{v} {u} {time_basic:.2f}\n")
-        edges_time2.append(f"{v} {u} {time_tortuous:.2f}\n")
-        edges_tort.append(f"{v} {u} {tortuosity:.4f}\n")
+        edges_dist.append(f"{v} {u} {length_m:.2f}")
+        edges_time1.append(f"{v} {u} {time_basic:.2f}")
+        edges_time2.append(f"{v} {u} {time_tortuous:.2f}")
+        edges_tort.append(f"{v} {u} {tortuosity:.4f}")
 
     # Ukládání do souborů
     print("4. Ukládám soubory na disk...")

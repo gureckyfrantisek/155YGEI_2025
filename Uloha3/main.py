@@ -100,7 +100,7 @@ def main():
     for i in range(len(graphs)):
         predecessors[i] = dijkstra(graphs[i], 1)
         
-        paths[i] = rectPath(predecessors[i], 1, 57851)
+        paths[i] = rectPath(predecessors[i], 1, 33456)
     
         print(paths[i])
     
