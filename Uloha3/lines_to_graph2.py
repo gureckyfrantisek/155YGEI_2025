@@ -63,6 +63,8 @@ def loadEdgesWithIDs(file_name):
             E.append(int(eid))
             W.append(float(w))
 
+    f.close()
+
     return S, E, W
 
 def edgesToGraphFromIDs(S, E, W):

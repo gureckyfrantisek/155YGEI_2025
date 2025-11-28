@@ -2,6 +2,7 @@ from lines_to_graph2 import *
 from pathlib import Path
 from r2g_ver_1_2 import get_graphs, ADRESAR
 import matplotlib.pyplot as plt
+from kruskal import kruskal_mst
 
 def dijkstra(G, start):
     '''
@@ -47,7 +48,7 @@ def rectPath(pred, u, v):
     path.append(v)
     return path
 
-def show_paths(graph, paths):
+def show_graph(graph, paths=[]):
     # Prepare the dictionary
     coords = {}
 
@@ -88,11 +89,15 @@ def main():
     data_dir = Path(__file__).parent / ADRESAR
     graphs = []
 
+    # Bonus: prepare arrays for minimum spanning trees
+    kruskal_msts = []
+
     for file in data_dir.iterdir():
         if file.name == "nodes.txt":
             continue
         graphs.append(convertToGraphWithIDs(file))
-    
+        kruskal_msts.append(kruskal_mst(file))
+
     # Run Dijsktra on all costs
     predecessors = [[]] * len(graphs)
     paths = [[]] * len(graphs)
@@ -104,7 +109,13 @@ def main():
     
         print(paths[i])
     
-    show_paths(graphs[0], paths)
+    # Show the best paths for all weights
+    # show_graph(graphs[0], paths)
+
+    # Show the MSTs
+    print(kruskal_msts[0])
+    for mst in kruskal_msts:
+        show_graph(mst)
 
 if __name__ == "__main__":
     main()
