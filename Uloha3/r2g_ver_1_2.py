@@ -112,7 +112,7 @@ def get_graphs():
         else:
             time_tortuous = 999999
 
-        # Ukládání (Obousměrně)
+        # Ukládání stačí jednosměrně, graf je poté interpretuje jako neorientovaný
         # Formát: u;v;váha
 
         # Kontrola, jestli už byl uzel použit, pokud ano, použij 
@@ -132,12 +132,6 @@ def get_graphs():
         edges_time1.append(f"{u} {v} {time_basic:.2f}")
         edges_time2.append(f"{u} {v} {time_tortuous:.2f}")
         edges_tort.append(f"{u} {v} {tortuosity:.4f}")
-        
-        # Zpět
-        edges_dist.append(f"{v} {u} {length_m:.2f}")
-        edges_time1.append(f"{v} {u} {time_basic:.2f}")
-        edges_time2.append(f"{v} {u} {time_tortuous:.2f}")
-        edges_tort.append(f"{v} {u} {tortuosity:.4f}")
 
     # Ukládání do souborů
     print("4. Ukládám soubory na disk...")
