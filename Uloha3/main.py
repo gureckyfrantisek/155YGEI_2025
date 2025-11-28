@@ -3,6 +3,7 @@ from pathlib import Path
 from r2g_ver_1_2 import get_graphs, ADRESAR
 import matplotlib.pyplot as plt
 from kruskal import kruskal_mst
+from prime import prime_mst
 
 def dijkstra(G, start):
     '''
@@ -77,7 +78,8 @@ def show_graph(graph, paths=[]):
 
     # Finally show the plot
     plt.axis('equal')
-    plt.legend()
+    if not paths == []:
+        plt.legend()
     plt.show()
             
 
@@ -91,12 +93,18 @@ def main():
 
     # Bonus: prepare arrays for minimum spanning trees
     kruskal_msts = []
+    prime_msts = []
 
     for file in data_dir.iterdir():
         if file.name == "nodes.txt":
             continue
-        graphs.append(convertToGraphWithIDs(file))
+        
+        new_graph = convertToGraphWithIDs(file)
+        graphs.append(new_graph)
+
+        # Make minimal spanning trees
         kruskal_msts.append(kruskal_mst(file))
+        prime_msts.append(prime_mst(new_graph, 0))
 
     # Run Dijsktra on all costs
     predecessors = [[]] * len(graphs)
@@ -113,8 +121,10 @@ def main():
     # show_graph(graphs[0], paths)
 
     # Show the MSTs
-    print(kruskal_msts[0])
-    for mst in kruskal_msts:
+    # for mst in kruskal_msts:
+    #     show_graph(mst)
+
+    for mst in prime_msts:
         show_graph(mst)
 
 if __name__ == "__main__":
