@@ -3,7 +3,6 @@ import osmnx as ox
 import math
 import re  # Přidáno pro lepší hledání čísel v textu
 
-# --- KONFIGURACE ---
 MISTO = 'Moravskoslezský kraj, Czechia' 
 ADRESAR = 'data_grafy' 
 
@@ -18,7 +17,6 @@ def get_graphs():
     ALL_FILES = [FILE_NODES, FILE_DIST, FILE_TIME1, FILE_TIME2, FILE_TORT]
 
     if not os.path.exists(ADRESAR):
-        print(f"Vytvářím složku {ADRESAR}")
         os.makedirs(ADRESAR)
 
     # --- KONTROLA EXISTENCE SOUBORŮ ---
@@ -27,8 +25,6 @@ def get_graphs():
     if files_exist:
         print(f"Soubory již existují ve složce '{ADRESAR}'.")
         return
-
-    print("Soubory nenalezeny. Probíhá stahování a výpočet.")
 
     ox.settings.timeout = 2000
     # Stažení grafu
@@ -78,18 +74,18 @@ def get_graphs():
         if max_speed_str in SPEED_DICT:
             final_speed = SPEED_DICT[max_speed_str]
         else:
-            # 3. Pokud to není ve slovníku, zkusíme z toho vytáhnout číslo
+            # Pokud to není ve slovníku, zkusíme z toho vytáhnout číslo
             # Použijeme regulární výraz, který najde první číslo v textu (např. z "50 mph" vytáhne 50)
             found_numbers = re.findall(r'\d+', max_speed_str)
             if found_numbers:
                 try:
                     final_speed = int(found_numbers[0])
                 except ValueError:
-                    final_speed = 50 # Fallback při chybě převodu
+                    final_speed = 50 
             else:
-                final_speed = 50 # Fallback pokud tam není ani číslo
+                final_speed = 50 
 
-        # Ošetření nulové rychlosti (aby se nedělilo nulou)
+        # Ošetření nulové rychlosti
         if final_speed <= 0:
             final_speed = 50
 
@@ -112,8 +108,7 @@ def get_graphs():
         else:
             time_tortuous = 999999
 
-        # Ukládání stačí jednosměrně, graf je poté interpretuje jako neorientovaný
-        # Formát: u;v;váha
+        # Ukládání ve formát: u;v;váha
 
         # Kontrola, jestli už byl uzel použit, pokud ano, použij 
         if u not in ordered_nodes:
@@ -134,7 +129,6 @@ def get_graphs():
         edges_tort.append(f"{u} {v} {tortuosity:.4f}")
 
     # Ukládání do souborů
-    print("4. Ukládám soubory na disk...")
 
     with open(FILE_NODES, 'w') as f:
         for node, data in G.nodes(data=True):
