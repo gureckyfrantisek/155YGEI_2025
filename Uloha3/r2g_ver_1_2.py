@@ -19,7 +19,7 @@ def get_graphs():
     if not os.path.exists(ADRESAR):
         os.makedirs(ADRESAR)
 
-    # --- KONTROLA EXISTENCE SOUBORŮ ---
+    # KONTROLA EXISTENCE SOUBORŮ
     files_exist = all(os.path.exists(f) for f in ALL_FILES)
 
     if files_exist:

@@ -6,6 +6,7 @@ from kruskal import kruskal_mst
 from prime import prime_mst
 import heapq
 from math import inf
+from Bellman_ford import Bellman_ford
 
 # def dijkstra(G, start):
 #     '''
@@ -136,6 +137,9 @@ def djikstra_single_pair(G, start, end):
     return paths, costs
 
 def main():
+    s_node=1
+    e_node=50
+
     # Get graphs from OSM
     get_graphs()
 
@@ -159,9 +163,9 @@ def main():
         prime_msts.append(prime_mst(new_graph, 0))
 
         
-    paths, costs = djikstra_single_pair(graphs, 2440, 38295)
-    for i in range(len(paths)):
-        print(f"Cena cesty v {i}. grafu: {costs[i]}")
+    paths=djikstra_single_pair(graphs,s_node,e_node)
+
+    neg_path=Bellman_ford(graphs[0],s_node)
 
     #=======================================================
     # Function that returns all predecessors for all nodes
