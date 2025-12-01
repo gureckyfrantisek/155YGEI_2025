@@ -6,6 +6,7 @@ from kruskal import kruskal_mst
 from prime import prime_mst
 import heapq
 from math import inf
+from Bellman_ford import Bellman_ford
 
 # def dijkstra(G, start):
 #     '''
@@ -132,6 +133,9 @@ def djikstra_single_pair(G, start, end):
     return paths
 
 def main():
+    s_node=1
+    e_node=50
+
     # Get graphs from OSM
     get_graphs()
 
@@ -155,8 +159,9 @@ def main():
         prime_msts.append(prime_mst(new_graph, 0))
 
         
-    paths=djikstra_single_pair(graphs,1,50)
-    print(paths)
+    paths=djikstra_single_pair(graphs,s_node,e_node)
+
+    neg_path=Bellman_ford(graphs[0],s_node)
 
     #=======================================================
     # Function that returns all predecessors for all nodes
@@ -169,7 +174,7 @@ def main():
     #=======================================================
     
     # Show the best paths for all weights
-    show_graph(graphs[0], paths)
+    # show_graph(graphs[0], paths)
 
     # Show the MSTs
     # for mst in kruskal_msts:

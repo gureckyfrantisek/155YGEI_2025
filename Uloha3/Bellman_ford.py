@@ -1,16 +1,20 @@
 from math import inf
 
-def Bellman_ford(G, source):
-    n=len(G)
-    dist=[inf]*(n+1)
-
-    for i in range(n+1):
-        for edge in G:
-            u,v,w=edge
-            if dist[u]!=inf and dist[v]>dist[u]+w:
-                
-                if i==n:
-                    return [-1]
-                dist[v]=dist[u]+w
+def Bellman_ford(G, start):
+    nodes=list(G.keys())
+    n=len(nodes)
+    dist={node:inf for node in nodes}
+    dist[start]=0
+    for _ in range(n-1):
+        updated=False
+        for u in G:
+            if dist[u]==inf:
+                continue
+            for v,w in G[u].items():
+                if dist[v]>dist[u]+w:
+                    dist[v]=dist[u]+w
+                    updated=True
+        if not updated:
+            break
     return dist
 
