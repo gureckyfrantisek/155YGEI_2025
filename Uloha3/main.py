@@ -64,15 +64,18 @@ def dijkstra_heap(G, start):
 
     return pred
 
-def rectPath(pred, u, v):
+def rectPath(pred, u, v, graphs):
     path = []       # Empty path
-    
+    cost = [0] * len(graphs)     # Empty cost totals
+
     while u != v and v != None:
         path.append(v)
+        for i, graph in enumerate(graphs):
+            cost[i] += graph[v][pred[v]]
         v = pred[v]
         
     path.append(v)
-    return path
+    return path, cost
 
 def show_graph(graph, paths=[]):
     # Prepare the dictionary
@@ -124,12 +127,13 @@ def djikstra_all_pairs(G):
 def djikstra_single_pair(G, start, end):
     predecessors = [[]] * len(G)
     paths = [[]] * len(G)
+    costs = [0] * len(paths)
     
     for i in range(len(G)):
         predecessors[i] = dijkstra_heap(G[i], start)
         
-        paths[i] = rectPath(predecessors[i], start, end)
-    return paths
+        paths[i], costs[i] = rectPath(predecessors[i], start, end, G)
+    return paths, costs
 
 def main():
     # Get graphs from OSM
@@ -155,8 +159,9 @@ def main():
         prime_msts.append(prime_mst(new_graph, 0))
 
         
-    paths=djikstra_single_pair(graphs,1,50)
-    print(paths)
+    paths, costs = djikstra_single_pair(graphs, 2440, 38295)
+    for i in range(len(paths)):
+        print(f"Cena cesty v {i}. grafu: {costs[i]}")
 
     #=======================================================
     # Function that returns all predecessors for all nodes
@@ -169,7 +174,7 @@ def main():
     #=======================================================
     
     # Show the best paths for all weights
-    show_graph(graphs[0], paths)
+    # show_graph(graphs[0], paths)
 
     # Show the MSTs
     # for mst in kruskal_msts:
@@ -178,5 +183,6 @@ def main():
     # for mst in prime_msts:
     #     show_graph(mst)
 
+# NOTICE: RUN THE PROGRAMME FROM THE Uloha3 FOLDER
 if __name__ == "__main__":
     main()
