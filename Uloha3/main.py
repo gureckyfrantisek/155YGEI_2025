@@ -1,6 +1,6 @@
 from lines_to_graph2 import *
 from pathlib import Path
-from r2g_ver_1_2 import get_graphs, ADRESAR
+from roads2graph import get_graphs, ADRESAR
 import matplotlib.pyplot as plt
 from kruskal import kruskal_mst
 from prime import prime_mst
@@ -129,10 +129,8 @@ def djikstra_single_pair(G, start, end):
     predecessors = [[]] * len(G)
     paths = [[]] * len(G)
     costs = [0] * len(paths)
-    
     for i in range(len(G)):
         predecessors[i] = dijkstra_heap(G[i], start)
-        
         paths[i], costs[i] = rectPath(predecessors[i], start, end, G)
     return paths, costs
 
@@ -163,10 +161,13 @@ def main():
         prime_msts.append(prime_mst(new_graph, 0))
 
         
-    paths=djikstra_single_pair(graphs,s_node,e_node)
+    paths,costs=djikstra_single_pair(graphs,s_node,e_node)
+    # print(paths[0],costs[0])
 
-    neg_path=Bellman_ford(graphs[0],s_node)
-
+    pred_neg,cost=Bellman_ford(graphs[0],s_node)
+    neg_path=rectPath(pred_neg,s_node,e_node,graphs)
+    # print(neg_path[0],cost[e_node])
+    
     #=======================================================
     # Function that returns all predecessors for all nodes
     # However, the function runs for several tens of minutes up to an hour
