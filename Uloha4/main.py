@@ -14,13 +14,13 @@ def gen_pts(dimensions, cluster_count):
         # Random offset from center
         offset = [0] * dimensions
         for o in range(dimensions):
-            offset[o] = (random.random() - 0.5) * 20        # Random float from -10 to 10
+            offset[o] = (random.random() - 0.5) * 50        # Random float from -25 to 25
         
         # Generate cluster points
         for j in range(cluster_points):
             point = []
             for k in range(dimensions):
-                point.append((random.random() - 0.5) * 20 + offset[k])   # Random float from -10 to 10 with offset
+                point.append((random.random() - 0.5) * 10 + offset[k])   # Random float from -5 to 5 with offset
             
             points.append(point)
                 
@@ -101,7 +101,7 @@ def k_means(points, cluster_count):
     # After the iteration is over, return the belonging array and the final centroids
     return belongs_to, centroids
 
-def visualize(points, belongs_to, centroids, belongs_to_sc, centroids_sc):
+def visualize(points, belongs_to, centroids):
     # Get the same coordinates to list, if the dimension is two
     if len(points[0]) > 2:
         print("Unable to visualize in more than 2D")
@@ -111,13 +111,16 @@ def visualize(points, belongs_to, centroids, belongs_to_sc, centroids_sc):
     
     # Plot points for the cluster
     for i in range(cluster_count):
-        cluster_i = [[]] * 2
+        # Separate lists for x and y
+        cluster_x = []
+        cluster_y = []
+        
         for j in range(len(points)):
             if belongs_to[j] == i:
-                cluster_i[0].append(points[i][0])
-                cluster_i[1].append(points[i][1])
+                cluster_x.append(points[j][0])
+                cluster_y.append(points[j][1])
 
-        plt.scatter(cluster_i[0], cluster_i[1], s=10)
+        plt.scatter(cluster_x, cluster_y, s=10)
 
     # Plot centroids
     cent_x = [c[0] for c in centroids]
@@ -146,7 +149,7 @@ def main():
     points = gen_pts(dim, cluster_count)
     
     belongs_to, centroids = k_means(points, cluster_count)
-    belongs_to_sc, centroids_sc = k_means(points, cluster_count)
+    belongs_to_sc, centroids_sc = k_means_scikit(cluster_count, "random", points)
     
     # Vizualize the results
     visualize(points, belongs_to, centroids)
