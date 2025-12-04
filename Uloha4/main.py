@@ -1,5 +1,7 @@
 import random
 import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+import numpy as np
 # K-Means clustering
 
 def gen_pts(dimensions, cluster_count):
@@ -99,10 +101,10 @@ def k_means(points, cluster_count):
     # After the iteration is over, return the belonging array and the final centroids
     return belongs_to, centroids
 
-def visualize(points, belongs_to, centroids):
+def visualize(points, belongs_to, centroids, belongs_to_sc, centroids_sc):
     # Get the same coordinates to list, if the dimension is two
     if len(points[0]) > 2:
-        print("Cannot visualize in 2D")
+        print("Unable to visualize in more than 2D")
         return
     
     cluster_count = len(centroids)
@@ -125,6 +127,18 @@ def visualize(points, belongs_to, centroids):
     plt.title("K-Means Clustering Visualization")
     plt.show()
     
+def k_means_scikit(cluster_count, init, points):
+    # First translate the point data to np.array
+    data = np.array(points)
+    kmeans_instance = KMeans(n_clusters=cluster_count, random_state=0, n_init="auto", init=init)
+    kmeans = kmeans_instance.fit(data)
+    
+    # Prepare the data as simple lists and return them
+    belongs_to = kmeans.labels_.tolist()               # Similar to our belongs_to array of indices
+    centroids = kmeans.cluster_centers_.tolist()     # The centroids of clusters
+
+    return belongs_to, centroids
+    
 def main():
     dim = 2
     cluster_count = 5
@@ -132,8 +146,11 @@ def main():
     points = gen_pts(dim, cluster_count)
     
     belongs_to, centroids = k_means(points, cluster_count)
+    belongs_to_sc, centroids_sc = k_means(points, cluster_count)
     
+    # Vizualize the results
     visualize(points, belongs_to, centroids)
+    visualize(points, belongs_to_sc, centroids_sc)
 
 if __name__ == "__main__":
     main()
