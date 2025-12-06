@@ -141,19 +141,78 @@ def k_means_scikit(cluster_count, init, points):
     centroids = kmeans.cluster_centers_.tolist()     # The centroids of clusters
 
     return belongs_to, centroids
-    
+
+def calculate_stats(centroids, centroids_ref):
+    centroids = np.array(centroids)
+    centroids_ref = np.array(centroids_ref)
+
+    # Pair the closest centroids
+    distances = []
+    diffs = []
+
+    for c in centroids:
+        # Find the minimal distance
+        d = np.linalg.norm(centroids_ref - c, axis=1)
+        i = np.argmin(d)
+
+        distances.append(d[i])
+        diffs.append(c - centroids_ref[i])
+
+    distances = np.array(distances)
+    diffs = np.array(diffs)
+
+    return {
+        "mean_distance": float(np.mean(distances)),
+        "std_distance": float(np.std(distances)),
+        "max_distance": float(np.max(distances)),
+        "min_distance": float(np.min(distances)),
+        "diffs": diffs
+    }
+
+def summarize_runs(stats_total):
+    # Extract lists
+    means = np.array([s["mean_distance"] for s in stats_total])
+    stds  = np.array([s["std_distance"] for s in stats_total])
+    maxs  = np.array([s["max_distance"] for s in stats_total])
+    mins  = np.array([s["min_distance"] for s in stats_total])
+
+    return {
+        "mean_of_means": float(np.mean(means)),
+        "std_of_means": float(np.std(means)),
+
+        "mean_of_stds": float(np.mean(stds)),
+        "std_of_stds": float(np.std(stds)),
+
+        "mean_of_maxs": float(np.mean(maxs)),
+        "max_of_maxs": float(np.max(maxs)),
+        "min_of_mins": float(np.min(mins))
+    }
+
 def main():
-    dim = 2
+    dim = 8
     cluster_count = 5
     
     points = gen_pts(dim, cluster_count)
     
-    belongs_to, centroids = k_means(points, cluster_count)
-    belongs_to_sc, centroids_sc = k_means_scikit(cluster_count, "random", points)
+    stats_total = []
+
+    for _ in range(100):
+        belongs_to, centroids = k_means(points, cluster_count)
+        belongs_to_sc, centroids_sc = k_means_scikit(cluster_count, "random", points)
+        stats_total.append(calculate_stats(centroids, centroids_sc))
     
-    # Vizualize the results
-    visualize(points, belongs_to, centroids)
-    visualize(points, belongs_to_sc, centroids_sc)
+    summary_stats = summarize_runs(stats_total)
+    
+    print("Summary of 100 runs:")
+    for k, v in summary_stats.items():
+        print(f"{k}: {v}")
+
+    # belongs_to, centroids = k_means(points, cluster_count)
+    # belongs_to_sc, centroids_sc = k_means_scikit(cluster_count, "random", points)
+    
+    # # Vizualize the results
+    # visualize(points, belongs_to, centroids)
+    # visualize(points, belongs_to_sc, centroids_sc)
 
 if __name__ == "__main__":
     main()
